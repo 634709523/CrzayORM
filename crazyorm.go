@@ -1,6 +1,7 @@
 package CrzayORM
 
 import (
+	"CrzayORM/dialect"
 	"filestore-server/db"
 	"database/sql"
 	"crzayORM/log"
@@ -9,6 +10,7 @@ import (
 
 type Engine struct {
 	db *sql.DB
+	dialect dialect.Dialect
 }
 
 func NewEngine(driver,source string)(e *Engine,err error){
@@ -21,6 +23,12 @@ func NewEngine(driver,source string)(e *Engine,err error){
 	// Send a Ping to make sure the database connection is alive
 	if err = db.Ping(); err != nil{
 		log.Error(err)
+		return 
+	}
+	// make sure the spicific dialect exsits
+	dial,ok := dialect.GetDialect(driver)
+	if !ok {
+		log.Errorf(("dialect %s Not Found"), driver)
 		return 
 	}
 	e = &Engine{db: db}
@@ -38,5 +46,5 @@ func (engine *Engine)Close(){
 
 // create session by Engine
 func (engine *Engine)NewSession()*session.Session{
-	return session.New(engine.db)
+	return session.New(engine.db,engine.dialect)
 }
